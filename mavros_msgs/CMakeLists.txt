@@ -38,6 +38,7 @@ add_message_files(
   OverrideRCIn.msg
   Param.msg
   ParamValue.msg
+  PoseSetpoint.msg
   PositionTarget.msg
   RCIn.msg
   RCOut.msg

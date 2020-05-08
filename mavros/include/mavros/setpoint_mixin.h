@@ -75,6 +75,59 @@ public:
 };
 
 /**
+ * @brief This mixin adds set_position_target_local_ned()
+ */
+template <class D>
+class SetPoseTargetLocalNEDMixin {
+public:
+	//! Message specification: @p https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED
+	void set_pose_target_local_ned(uint32_t time_boot_ms, uint8_t coordinate_frame,
+			uint16_t type_mask,
+			Eigen::Vector3d p,
+			Eigen::Vector3d v,
+			Eigen::Vector3d af,
+			Eigen::Quaterniond ori,
+			Eigen::Vector3d r,
+			Eigen::Vector3d aa)
+	{
+		mavros::UAS *m_uas_ = static_cast<D *>(this)->m_uas;
+		mavlink::common::msg::SET_POSE_TARGET_LOCAL_NED sp;
+
+		m_uas_->msg_set_target(sp);
+
+		// [[[cog:
+		// for f in ('time_boot_ms', 'coordinate_frame', 'type_mask', 'yaw', 'yaw_rate'):
+		//     cog.outl("sp.%s = %s;" % (f, f))
+		// for fp, vp in (('', 'p'), ('v', 'v'), ('af', 'af')):
+		//     for a in ('x', 'y', 'z'):
+		//         cog.outl("sp.%s%s = %s.%s();" % (fp, a, vp, a))
+		// ]]]
+		sp.time_boot_ms = time_boot_ms;
+		sp.coordinate_frame = coordinate_frame;
+		sp.type_mask = type_mask;
+		sp.x = p.x();
+		sp.y = p.y();
+		sp.z = p.z();
+		sp.vx = v.x();
+		sp.vy = v.y();
+		sp.vz = v.z();
+		sp.afx = af.x();
+		sp.afy = af.y();
+		sp.afz = af.z(); 
+		mavros::ftf::quaternion_to_mavlink(ori, sp.q);  
+        sp.rr =  r.x();
+        sp.pr =  r.y();
+        sp.yr =  r.z();   
+        sp.ra =  aa.x();
+        sp.pa =  aa.y();               
+        sp.ya =  aa.z();
+		// [[[end]]] (checksum: 6a9b9dacbcf85c5d428d754c20afe110)
+
+		UAS_FCU(m_uas_)->send_message_ignore_drop(sp);
+	}
+};
+
+/**
  * @brief This mixin adds set_position_target_global_int()
  */
 template <class D>
