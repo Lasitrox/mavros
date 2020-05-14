@@ -1,22 +1,16 @@
 /**
  * @brief SetpointPose plugin
- * @file setpoint_position.cpp
- * @author Vladimir Ermakov <vooon341@gmail.com>
+ * @file setpoint_pose.cpp
+ * @author Stefan Arzbach
  *
  * @addtogroup plugin
  * @{
  */
-/*
- * Copyright 2014,2016 Vladimir Ermakov.
- *
- * This file is part of the mavros package and subject to the license terms
- * in the top-level LICENSE file of the mavros repository.
- * https://github.com/mavlink/mavros/tree/master/LICENSE.md
- */
+
 
 #include <mavros/mavros_plugin.h>
-#include <mavros/setpoint_mixin.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <mavros/utils.h>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/PoseSetpoint.h>
@@ -27,15 +21,16 @@
 #include <GeographicLib/Geocentric.hpp>
 
 namespace mavros {
-namespace std_plugins {
+namespace extra_plugins {
+
 using mavlink::common::MAV_FRAME;
 /**
- * @brief Setpoint position plugin
+ * @brief Setpoint pose plugin
  *
  * Send setpoint positions to FCU controller.
  */
-class SetpointPosePlugin : public plugin::PluginBase,
-	private plugin::SetPoseTargetLocalNEDMixin<SetpointPosePlugin> {
+class SetpointPosePlugin : public plugin::PluginBase
+{
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -77,7 +72,6 @@ public:
 	}
 
 private:
-	friend class SetPoseTargetLocalNEDMixin;
 
 	ros::NodeHandle sp_nh;
 	ros::NodeHandle spg_nh;		//!< to get local position and gps coord which are not under sp_h()
@@ -99,6 +93,50 @@ private:
 	double tf_rate;
 
 	MAV_FRAME mav_frame;
+
+	void set_pose_target_local_ned(uint32_t time_boot_ms, uint8_t coordinate_frame,
+			uint16_t type_mask,
+			Eigen::Vector3d p,
+			Eigen::Vector3d v,
+			Eigen::Vector3d af,
+			Eigen::Quaterniond ori,
+			Eigen::Vector3d r,
+			Eigen::Vector3d aa)
+	{
+		mavlink::common::msg::SET_POSE_TARGET_LOCAL_NED sp;
+
+		m_uas->msg_set_target(sp);
+
+		// [[[cog:
+		// for f in ('time_boot_ms', 'coordinate_frame', 'type_mask', 'yaw', 'yaw_rate'):
+		//     cog.outl("sp.%s = %s;" % (f, f))
+		// for fp, vp in (('', 'p'), ('v', 'v'), ('af', 'af')):
+		//     for a in ('x', 'y', 'z'):
+		//         cog.outl("sp.%s%s = %s.%s();" % (fp, a, vp, a))
+		// ]]]
+		sp.time_boot_ms = time_boot_ms;
+		sp.coordinate_frame = coordinate_frame;
+		sp.type_mask = type_mask;
+		sp.x = p.x();
+		sp.y = p.y();
+		sp.z = p.z();
+		sp.vx = v.x();
+		sp.vy = v.y();
+		sp.vz = v.z();
+		sp.afx = af.x();
+		sp.afy = af.y();
+		sp.afz = af.z(); 
+		mavros::ftf::quaternion_to_mavlink(ori, sp.q);  
+        sp.rr =  r.x();
+        sp.pr =  r.y();
+        sp.yr =  r.z();   
+        sp.ra =  aa.x();
+        sp.pa =  aa.y();               
+        sp.ya =  aa.z();
+		// [[[end]]] (checksum: 6a9b9dacbcf85c5d428d754c20afe110)
+
+		UAS_FCU(m_uas)->send_message_ignore_drop(sp);
+	}
 
 	/* -*- callbacks -*- */
 
@@ -201,8 +239,11 @@ private:
 		return true;
 	}
 };
-}	// namespace std_plugins
+}	// namespace extra-plugins
 }	// namespace mavros
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mavros::std_plugins::SetpointPosePlugin, mavros::plugin::PluginBase)
+PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::SetpointPosePlugin, mavros::plugin::PluginBase)
+//PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::RangefinderPlugin, mavros::plugin::PluginBase)
+
+

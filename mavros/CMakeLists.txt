@@ -140,7 +140,6 @@ add_library(mavros_plugins
   src/plugins/vfr_hud.cpp
   src/plugins/waypoint.cpp
   src/plugins/wind_estimation.cpp
-  src/plugins/setpoint_pose.cpp
 )
 add_dependencies(mavros_plugins
   mavros

@@ -77,7 +77,4 @@
 	<class name="wind_estimation" type="mavros::std_plugins::WindEstimationPlugin" base_class_type="mavros::plugin::PluginBase">
 		<description>Publish wind estimates</description>
 	</class>
-	<class name="setpoint_pose" type="mavros::std_plugins::setpoint_pose" base_class_type="mavros::plugin::PluginBase">
-		<description>Subscribes to pose_setpoints</description>
-	</class>
 </library>

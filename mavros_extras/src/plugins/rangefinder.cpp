@@ -68,3 +68,5 @@ private:
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::RangefinderPlugin, mavros::plugin::PluginBase)
+//PLUGINLIB_EXPORT_CLASS(mavros::extra_plugins::SetpointPosePlugin, mavros::plugin::PluginBase)
+
